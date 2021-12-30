@@ -2,8 +2,8 @@ use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
 use std::net::{SocketAddr, TcpListener};
 
-use crate::db;
 use crate::configuration::Settings;
+use crate::db;
 use crate::routes::{health_check, subscribe};
 
 pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr)> {
