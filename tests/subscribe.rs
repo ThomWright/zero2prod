@@ -13,7 +13,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
 
-    let addr = init_global_server();
+    let addr = init_global_server().await;
     let client = reqwest::Client::new();
     let body = format!(
         "name={}&email={}",
@@ -40,7 +40,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
 
-    let addr = init_global_server();
+    let addr = init_global_server().await;
     let client = reqwest::Client::new();
     let test_cases = vec![
         (

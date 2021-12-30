@@ -5,7 +5,7 @@ mod init;
 #[tokio::test]
 async fn health_check_works() {
     // Arrange
-    let addr = init_global_server();
+    let addr = init_global_server().await;
 
     let client = reqwest::Client::new();
 
