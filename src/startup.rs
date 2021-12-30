@@ -1,20 +1,13 @@
 use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
-use sqlx::{migrate, Connection, PgConnection};
 use std::net::{SocketAddr, TcpListener};
 
+use crate::db;
 use crate::configuration::Settings;
 use crate::routes::{health_check, subscribe};
 
 pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr)> {
-    let mut connection = PgConnection::connect(&configuration.database.connection_string())
-        .await
-        .expect("Failed to connect to Postgres.");
-
-    migrate!("db/migrations")
-        .run(&mut connection)
-        .await
-        .expect("Failed to run migrations");
+    db::run_migrations(&configuration).await;
 
     let listener = TcpListener::bind(format!("127.0.0.1:{}", configuration.application_port))?;
     let socket_addr = listener.local_addr()?;
