@@ -1,42 +1,83 @@
 #!/usr/bin/env bash
 
-set -x
-set -eo pipefail
+set -o errexit
+set -o pipefail
+set -o nounset
+# set -o xtrace
 
-# if ! [ -x "$(command -v sqlx)" ]; then
-#   echo >&2 "Error: sqlx is not installed."
-#   echo >&2 "Use:"
-#   echo >&2 "cargo install --version=0.5.7 sqlx-cli --no-default-features --features postgres"
-#   echo >&2 "to install it."
-#   exit 1
-# fi
+usage() {
+  cat <<EOF
+Initialise a PostgreSQL database to develop against.
 
-DB_USER=${POSTGRES_USER:=postgres}
-DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
-DB_NAME="${POSTGRES_DB:=newsletter}"
-DB_PORT="${POSTGRES_PORT:=5432}"
+Runs PostgreSQL in a Docker container, and runs the migrations against it.
 
-if [[ -z "${SKIP_DOCKER}" ]]; then
-  docker run \
-    --env POSTGRES_USER=${DB_USER} \
-    --env POSTGRES_PASSWORD=${DB_PASSWORD} \
-    --env POSTGRES_DB=${DB_NAME} \
-    --publish "${DB_PORT}":5432 \
-    --detach \
-    postgres:14 \
+Dependencies:
+- Docker
+- psql
+- sqlx
+
+Optional:
+  -h --help                        - Print this help and exit
+EOF
+}
+
+log() {
+  echo -e "${1:-}" >&2
+}
+logT() {
+  echo -e "$(date --utc +'%Y-%m-%dT%H:%M:%SZ') $1" >&2
+}
+
+# Check any required dependencies exist
+check_environment() {
+  local req_commands="sqlx psql docker" # space-separated list
+  for comm in $req_commands; do
+    if ! command -v "$comm" &>/dev/null; then
+      log "🙈 Required command '$comm' could not be found"
+      if [[ "$comm" == "sqlx" ]]; then
+        log "Use:"
+        log "cargo install --version=0.5.7 sqlx-cli --no-default-features --features postgres"
+        log "to install it."
+      fi
+      exit 1
+    fi
+  done
+}
+
+run() {
+  local DB_USER=${POSTGRES_USER:=postgres}
+  local DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
+  local DB_NAME="${POSTGRES_DB:=newsletter}"
+  local DB_PORT="${POSTGRES_PORT:=5432}"
+
+  export PGPASSWORD="${DB_PASSWORD}"
+  if ! psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; then
+    docker run \
+      --env POSTGRES_USER=${DB_USER} \
+      --env POSTGRES_PASSWORD=${DB_PASSWORD} \
+      --env POSTGRES_DB=${DB_NAME} \
+      --publish "${DB_PORT}":5432 \
+      --detach \
+      postgres:14
+    # Increase max connections
     postgres -N 1000
-fi
 
-# export PGPASSWORD="${DB_PASSWORD}"
-# until docker run postgres:14 psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
-#   echo >&2 "Postgres is still unavailable - sleeping"
-#   sleep 1
-# done
-# echo >&2 "Postgres is running"
+    until psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
+      log "Postgres is still unavailable - sleeping"
+      sleep 1
+    done
+    log "Postgres is running on port ${DB_PORT}"
+  else
+    log "Using existing database on port ${DB_PORT}"
+  fi
 
-# echo >&2 "Postgres is up and running on port ${DB_PORT} - running migrations now!"
-# export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
-# sqlx database create
-# sqlx migrate run
+  log "Running migrations"
+  export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
+  sqlx database create
+  sqlx migrate run
 
-# echo >&2 "Postgres has been migrated, ready to go!"
+  log "Migrations run, ready to go!"
+}
+
+check_environment
+run
