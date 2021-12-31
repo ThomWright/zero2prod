@@ -51,18 +51,18 @@ run() {
   local DB_PORT="${POSTGRES_PORT:=5432}"
 
   export PGPASSWORD="${DB_PASSWORD}"
-  if ! psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; then
+  if ! psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q' 2>/dev/null; then
     docker run \
       --env POSTGRES_USER=${DB_USER} \
       --env POSTGRES_PASSWORD=${DB_PASSWORD} \
       --env POSTGRES_DB=${DB_NAME} \
       --publish "${DB_PORT}":5432 \
       --detach \
-      postgres:14
-    # Increase max connections
-    postgres -N 1000
+      --name zero2prod_pg \
+      postgres:14 \
+      postgres -N 1000
 
-    until psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
+    until psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q' 2>/dev/null; do
       log "Postgres is still unavailable - sleeping"
       sleep 1
     done

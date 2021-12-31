@@ -1,6 +1,4 @@
-use init::init_global_server;
-
-mod init;
+use crate::init::init_global_server;
 
 #[tokio::test]
 async fn health_check_works() {

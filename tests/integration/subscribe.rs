@@ -1,11 +1,9 @@
+use crate::init::init_global_server;
 use fake::{
     faker::{internet::en::SafeEmail, name::en::Name},
     Fake,
 };
-use init::init_global_server;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
-
-mod init;
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {

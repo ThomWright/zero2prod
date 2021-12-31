@@ -1,4 +1,3 @@
-// use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 use tokio::sync::OnceCell;
 use zero2prod::configuration::{DatabaseSettings, Settings};
@@ -23,7 +22,7 @@ async fn spawn_app() -> SocketAddr {
 
     let (server, addr) = zero2prod::run(configuration)
         .await
-        .expect("Failed to bind address");
+        .expect("Failed to start server");
 
     let _ = tokio::spawn(server);
 
