@@ -1,10 +1,23 @@
+use once_cell::sync::Lazy;
 use std::net::SocketAddr;
-use tokio::sync::OnceCell;
+use tokio::{runtime::Runtime, sync::OnceCell};
 use zero2prod::configuration::{DatabaseSettings, Settings};
 
-static ADDR: OnceCell<SocketAddr> = OnceCell::const_new();
+// TODO: Could we run the global server in another thread, which uses a
+//       separate runtime to the one the tests use?
 
-pub async fn init_global_server() -> SocketAddr {
+pub fn test_global_rt<F: std::future::Future>(f: F) -> F::Output {
+    static RT: Lazy<Runtime> = Lazy::new(|| {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("Failed building the Runtime")
+    });
+    RT.block_on(f)
+}
+
+pub async fn get_global_server_address() -> SocketAddr {
+    static ADDR: OnceCell<SocketAddr> = OnceCell::const_new();
     ADDR.get_or_init(|| spawn_app()).await.clone()
 }
 

@@ -1,20 +1,22 @@
-use crate::init::init_global_server;
+use crate::globals::{get_global_server_address, test_global_rt};
 
-#[tokio::test]
-async fn health_check_works() {
-    // Arrange
-    let addr = init_global_server().await;
+#[test]
+fn health_check_works() {
+    test_global_rt(async {
+        // Arrange
+        let addr = get_global_server_address().await;
 
-    let client = reqwest::Client::new();
+        let client = reqwest::Client::new();
 
-    // Act
-    let response = client
-        .get(format!("http://{}/health_check", addr))
-        .send()
-        .await
-        .expect("Failed to execute request.");
+        // Act
+        let response = client
+            .get(format!("http://{}/health_check", addr))
+            .send()
+            .await
+            .expect("Failed to execute request.");
 
-    // Assert
-    assert!(response.status().is_success());
-    assert_eq!(Some(0), response.content_length());
+        // Assert
+        assert!(response.status().is_success());
+        assert_eq!(Some(0), response.content_length());
+    })
 }
