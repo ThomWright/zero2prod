@@ -50,17 +50,23 @@ run() {
   local DB_NAME="${POSTGRES_DB:=newsletter}"
   local DB_PORT="${POSTGRES_PORT:=5432}"
 
+  local DOCKER_CONTAINER_NAME="zero2prod_pg"
+
   export PGPASSWORD="${DB_PASSWORD}"
   if ! psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q' 2>/dev/null; then
-    docker run \
-      --env POSTGRES_USER=${DB_USER} \
-      --env POSTGRES_PASSWORD=${DB_PASSWORD} \
-      --env POSTGRES_DB=${DB_NAME} \
-      --publish "${DB_PORT}":5432 \
-      --detach \
-      --name zero2prod_pg \
-      postgres:14 \
-      postgres -N 1000
+    if [ "$(docker ps -aq -f status=exited -f name=$DOCKER_CONTAINER_NAME)" ]; then
+      docker start $DOCKER_CONTAINER_NAME
+    else
+      docker run \
+        --env POSTGRES_USER=${DB_USER} \
+        --env POSTGRES_PASSWORD=${DB_PASSWORD} \
+        --env POSTGRES_DB=${DB_NAME} \
+        --publish "${DB_PORT}":5432 \
+        --detach \
+        --name $DOCKER_CONTAINER_NAME \
+        postgres:14 \
+        postgres -N 1000
+    fi
 
     until psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q' 2>/dev/null; do
       log "Postgres is still unavailable - sleeping"
