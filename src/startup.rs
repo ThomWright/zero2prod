@@ -1,4 +1,5 @@
 use actix_web::dev::Server;
+use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use sqlx::PgPool;
 use std::net::{SocketAddr, TcpListener};
@@ -22,13 +23,14 @@ pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr
     let server = HttpServer::new(move || {
         App::new()
             .app_data(pool.clone())
+            .wrap(Logger::default())
             .route("/health_check", web::get().to(health_check))
             .route("/subscriptions", web::post().to(subscribe))
     })
     .listen(listener)?
     .run();
 
-    println!("Server running");
+    log::info!("Server running");
 
     Ok((server, socket_addr))
 }
