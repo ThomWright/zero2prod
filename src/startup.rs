@@ -1,6 +1,7 @@
 use actix_web::dev::Server;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
+use secrecy::ExposeSecret;
 use sqlx::PgPool;
 use std::net::{SocketAddr, TcpListener};
 
@@ -9,9 +10,10 @@ use crate::db;
 use crate::routes::{health_check, subscribe};
 
 pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr)> {
-    let connection_pool = PgPool::connect(&configuration.database.connection_string())
-        .await
-        .expect("Failed to connect to Postgres.");
+    let connection_pool =
+        PgPool::connect(&configuration.database.connection_string().expose_secret())
+            .await
+            .expect("Failed to connect to Postgres.");
 
     db::run_migrations(&connection_pool).await;
 

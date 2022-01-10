@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use secrecy::Secret;
 use std::net::SocketAddr;
 use tokio::{runtime::Runtime, sync::OnceCell};
 use zero2prod::{
@@ -43,7 +44,7 @@ async fn spawn_app() -> SocketAddr {
             host: "127.0.0.1".to_string(),
             port: 5432,
             username: "postgres".to_string(),
-            password: "password".to_string(),
+            password: Secret::new("password".into()),
             database_name: "newsletter".to_string(),
         },
     };
