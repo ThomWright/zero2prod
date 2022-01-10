@@ -1,9 +1,9 @@
 use actix_web::dev::Server;
-use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use secrecy::ExposeSecret;
 use sqlx::PgPool;
 use std::net::{SocketAddr, TcpListener};
+use tracing_actix_web::TracingLogger;
 
 use crate::configuration::Settings;
 use crate::db;
@@ -25,7 +25,7 @@ pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr
     let server = HttpServer::new(move || {
         App::new()
             .app_data(pool.clone())
-            .wrap(Logger::default())
+            .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(health_check))
             .route("/subscriptions", web::post().to(subscribe))
     })
