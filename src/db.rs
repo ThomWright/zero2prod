@@ -12,5 +12,5 @@ where
         .await
         .expect("Failed to run migrations");
 
-    log::info!("Database migrations applied");
+    tracing::info!("Database migrations applied");
 }

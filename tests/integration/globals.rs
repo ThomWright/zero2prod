@@ -1,7 +1,10 @@
 use once_cell::sync::Lazy;
 use std::net::SocketAddr;
 use tokio::{runtime::Runtime, sync::OnceCell};
-use zero2prod::configuration::{DatabaseSettings, Settings};
+use zero2prod::{
+    configuration::{DatabaseSettings, Settings},
+    telemetry,
+};
 
 // TODO: Could we run the global server in another thread, which uses a
 //       separate runtime to the one the tests use?
@@ -22,6 +25,18 @@ pub async fn get_global_server_address() -> SocketAddr {
 }
 
 async fn spawn_app() -> SocketAddr {
+    let default_filter_level = "info".to_string();
+    let subscriber_name = "test".to_string();
+    if std::env::var("TEST_LOG").is_ok() {
+        let subscriber =
+            telemetry::get_subscriber(subscriber_name, default_filter_level, std::io::stdout);
+        telemetry::init_subscriber(subscriber);
+    } else {
+        let subscriber =
+            telemetry::get_subscriber(subscriber_name, default_filter_level, std::io::sink);
+        telemetry::init_subscriber(subscriber);
+    };
+
     let configuration = Settings {
         application_port: 0,
         database: DatabaseSettings {

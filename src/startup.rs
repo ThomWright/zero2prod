@@ -30,7 +30,7 @@ pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr
     .listen(listener)?
     .run();
 
-    log::info!("Server running");
+    tracing::info!("Server running");
 
     Ok((server, socket_addr))
 }
