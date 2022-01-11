@@ -11,7 +11,7 @@ use crate::routes::{health_check, subscribe};
 
 pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr)> {
     let connection_pool =
-        PgPool::connect(&configuration.database.connection_string().expose_secret())
+        PgPool::connect(configuration.database.connection_string().expose_secret())
             .await
             .expect("Failed to connect to Postgres.");
 
