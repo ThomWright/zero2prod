@@ -3,7 +3,7 @@ use secrecy::Secret;
 use std::net::SocketAddr;
 use tokio::{runtime::Runtime, sync::OnceCell};
 use zero2prod::{
-    configuration::{DatabaseSettings, Settings},
+    configuration::{ApplicationSettings, DatabaseSettings, Settings},
     telemetry,
 };
 
@@ -39,7 +39,10 @@ async fn spawn_app() -> SocketAddr {
     };
 
     let configuration = Settings {
-        application_port: 0,
+        application: ApplicationSettings {
+            host: "localhost".into(),
+            port: 0,
+        },
         database: DatabaseSettings {
             host: "127.0.0.1".to_string(),
             port: 5432,

@@ -68,7 +68,12 @@ jobs:
           sudo apt install libpq-dev -y
           ./scripts/init_db.sh
 
-      - uses: actions-rs/cargo@v1
+      - name: Check sqlx-data.json is up-to-date
+        run: |
+          cargo sqlx prepare --check -- --bin zero2prod
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
         with:
           command: test
 
@@ -143,7 +148,8 @@ jobs:
           sudo apt-get install libpq-dev -y
           SKIP_DOCKER=true ./scripts/init_db.sh
 
-      - uses: actions-rs/clippy-check@v1
+      - name: Run clippy
+        uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: -- -D warnings
@@ -193,6 +199,7 @@ jobs:
             --features=${{ env.SQLX_FEATURES }}
             --no-default-features
             --locked
+
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y

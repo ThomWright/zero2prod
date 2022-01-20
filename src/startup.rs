@@ -1,23 +1,21 @@
 use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
-use secrecy::ExposeSecret;
-use sqlx::PgPool;
 use std::net::{SocketAddr, TcpListener};
 use tracing_actix_web::TracingLogger;
 
 use crate::configuration::Settings;
-use crate::db;
+use crate::db::{self, create_connection_pool};
 use crate::routes::{health_check, subscribe};
 
 pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr)> {
-    let connection_pool =
-        PgPool::connect(configuration.database.connection_string().expose_secret())
-            .await
-            .expect("Failed to connect to Postgres.");
+    let connection_pool = create_connection_pool(&configuration);
 
     db::run_migrations(&connection_pool).await;
 
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", configuration.application_port))?;
+    let listener = TcpListener::bind(format!(
+        "{}:{}",
+        configuration.application.host, configuration.application.port
+    ))?;
     let socket_addr = listener.local_addr()?;
 
     let pool = web::Data::new(connection_pool);

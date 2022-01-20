@@ -15,9 +15,6 @@ Dependencies:
 - Docker
 - psql
 - sqlx
-
-Optional:
-  -h --help                        - Print this help and exit
 EOF
 }
 

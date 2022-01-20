@@ -1,0 +1,8 @@
+.env
+spec.yaml
+target/
+deploy/
+tests/
+Dockerfile
+scripts/
+rust-toolchain.toml
