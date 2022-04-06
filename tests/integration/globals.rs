@@ -1,31 +1,37 @@
 use once_cell::sync::Lazy;
+use retry::{delay::Exponential, retry};
 use secrecy::Secret;
-use std::net::SocketAddr;
-use tokio::{runtime::Runtime, sync::OnceCell};
+use std::net::{SocketAddr, TcpListener, TcpStream};
 use zero2prod::{
     configuration::{ApplicationSettings, DatabaseSettings, Settings},
     telemetry,
 };
 
-// TODO: Could we run the global server in another thread, which uses a
-//       separate runtime to the one the tests use?
+pub static APP: Lazy<SocketAddr> = Lazy::new(|| {
+    let socket_addr = TcpListener::bind(("127.0.0.1", 0))
+        .unwrap()
+        .local_addr()
+        .unwrap();
 
-pub fn test_global_rt<F: std::future::Future>(f: F) -> F::Output {
-    static RT: Lazy<Runtime> = Lazy::new(|| {
-        tokio::runtime::Builder::new_current_thread()
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
-            .expect("Failed building the Runtime")
+            .expect("Failed to build the Runtime");
+
+        rt.block_on(async { spawn_app(socket_addr).await })
     });
-    RT.block_on(f)
-}
 
-pub async fn get_global_server_address() -> SocketAddr {
-    static ADDR: OnceCell<SocketAddr> = OnceCell::const_new();
-    ADDR.get_or_init(|| spawn_app()).await.clone()
-}
+    retry(
+        Exponential::from_millis_with_factor(150, 1.5).take(10),
+        || TcpStream::connect(socket_addr),
+    )
+    .expect("Could not connect to APP");
 
-async fn spawn_app() -> SocketAddr {
+    socket_addr
+});
+
+async fn spawn_app(socket_addr: SocketAddr) {
     let default_filter_level = "info".to_string();
     let subscriber_name = "test".to_string();
     if std::env::var("TEST_LOG").is_ok() {
@@ -40,8 +46,8 @@ async fn spawn_app() -> SocketAddr {
 
     let configuration = Settings {
         application: ApplicationSettings {
-            host: "localhost".into(),
-            port: 0,
+            host: socket_addr.ip().to_string(),
+            port: socket_addr.port(),
         },
         database: DatabaseSettings {
             host: "127.0.0.1".to_string(),
@@ -52,11 +58,9 @@ async fn spawn_app() -> SocketAddr {
         },
     };
 
-    let (server, addr) = zero2prod::run(configuration)
+    let server = zero2prod::init(configuration)
         .await
-        .expect("Failed to start server");
+        .expect("Failed to init server");
 
-    let _ = tokio::spawn(server);
-
-    addr
+    server.await.unwrap();
 }

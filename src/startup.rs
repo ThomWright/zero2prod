@@ -1,22 +1,18 @@
 use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
-use std::net::{SocketAddr, TcpListener};
+use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
 use crate::configuration::Settings;
 use crate::db::{self, create_connection_pool};
 use crate::routes::{health_check, subscribe};
 
-pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr)> {
+pub async fn init(configuration: Settings) -> std::io::Result<Server> {
     let connection_pool = create_connection_pool(&configuration);
 
     db::run_migrations(&connection_pool).await;
 
-    let listener = TcpListener::bind(format!(
-        "{}:{}",
-        configuration.application.host, configuration.application.port
-    ))?;
-    let socket_addr = listener.local_addr()?;
+    let listener = TcpListener::bind(configuration.application)?;
 
     let pool = web::Data::new(connection_pool);
 
@@ -32,5 +28,5 @@ pub async fn run(configuration: Settings) -> std::io::Result<(Server, SocketAddr
 
     tracing::info!("Server running");
 
-    Ok((server, socket_addr))
+    Ok(server)
 }

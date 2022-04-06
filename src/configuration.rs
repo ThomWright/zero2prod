@@ -1,16 +1,29 @@
+use std::{
+    io,
+    net::{SocketAddr, ToSocketAddrs},
+    vec,
+};
+
 use config;
 use secrecy::{ExposeSecret, Secret};
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
-    pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub database: DatabaseSettings,
 }
 
 #[derive(serde::Deserialize)]
 pub struct ApplicationSettings {
-    pub port: u16,
     pub host: String,
+    pub port: u16,
+}
+
+impl ToSocketAddrs for ApplicationSettings {
+    type Iter = vec::IntoIter<SocketAddr>;
+    fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<SocketAddr>> {
+        (self.host.clone(), self.port).to_socket_addrs()
+    }
 }
 
 #[derive(serde::Deserialize)]
