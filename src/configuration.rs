@@ -1,11 +1,10 @@
+use config;
+use secrecy::{ExposeSecret, Secret};
 use std::{
     io,
     net::{SocketAddr, ToSocketAddrs},
     vec,
 };
-
-use config;
-use secrecy::{ExposeSecret, Secret};
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
@@ -49,12 +48,8 @@ impl DatabaseSettings {
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
-    let mut settings = config::Config::default();
     let base_path = std::env::current_dir().expect("Failed to determine the current directory");
     let configuration_directory = base_path.join("configuration");
-
-    // Read the "default" configuration file
-    settings.merge(config::File::from(configuration_directory.join("base")).required(true))?;
 
     // Detect the running environment.
     // Default to `local` if unspecified.
@@ -63,11 +58,15 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
         .try_into()
         .expect("Failed to parse APP_ENVIRONMENT.");
 
-    // Layer on the environment-specific values.
-    settings.merge(
-        config::File::from(configuration_directory.join(environment.as_str())).required(true),
-    )?;
-    settings.try_into()
+    config::Config::builder()
+        // Read the "default" configuration file
+        .add_source(config::File::from(configuration_directory.join("base")).required(true))
+        // Layer on the environment-specific values.
+        .add_source(
+            config::File::from(configuration_directory.join(environment.as_str())).required(true),
+        )
+        .build()
+        .and_then(|s| s.try_deserialize())
 }
 
 /// The possible runtime environment for our application.
