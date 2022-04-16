@@ -1,7 +1,7 @@
+use crate::db::subscriptions;
+use crate::subscriber::Subscriber;
 use actix_web::{web, HttpResponse, Responder};
-use chrono::Utc;
 use sqlx::{self, PgPool};
-use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -19,33 +19,14 @@ pub struct FormData {
 )]
 #[allow(clippy::async_yields_async)]
 pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> impl Responder {
-    let res = match insert_subscriber(&pool, &form).await {
+    let subscriber = Subscriber {
+        email: form.email.clone(),
+        name: form.name.clone(),
+    };
+    let mut conn = pool.acquire().await.unwrap();
+    let res = match subscriptions::insert_subscriber(&mut conn, &subscriber).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     };
     res
-}
-
-#[tracing::instrument(
-    name = "Saving new subscriber details in the database",
-    skip(form, pool)
-)]
-pub async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        r#"
-    INSERT INTO subscriptions (id, email, name, subscribed_at)
-    VALUES ($1, $2, $3, $4)
-    "#,
-        Uuid::new_v4(),
-        form.email,
-        form.name,
-        Utc::now()
-    )
-    .execute(pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        e
-    })?;
-    Ok(())
 }

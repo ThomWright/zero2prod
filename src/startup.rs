@@ -4,13 +4,13 @@ use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
 use crate::configuration::Settings;
-use crate::db::{self, create_connection_pool};
+use crate::db::{run_migrations, create_connection_pool};
 use crate::routes::{health_check, subscribe};
 
 pub async fn init(configuration: Settings) -> std::io::Result<Server> {
     let connection_pool = create_connection_pool(&configuration);
 
-    db::run_migrations(&connection_pool).await;
+    run_migrations(&connection_pool).await;
 
     let listener = TcpListener::bind(configuration.application)?;
 
