@@ -51,7 +51,7 @@ run() {
 
   export PGPASSWORD="${DB_PASSWORD}"
   if ! psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q' 2>/dev/null; then
-    if [ "$(docker ps -aq -f status=exited -f name=$DOCKER_CONTAINER_NAME)" ]; then
+    if [ "$(docker ps -aq -f status=exited -f status=created -f name=$DOCKER_CONTAINER_NAME)" ]; then
       docker start $DOCKER_CONTAINER_NAME
     else
       docker run \
