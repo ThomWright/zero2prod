@@ -3,24 +3,19 @@
   "length": {
     "type": "number",
     "range": {
-      "low": 50,
-      "high": 100,
+      "low": 3,
+      "high": 5,
       "step": 1
     },
     "subtype": "u64"
   },
   "content": {
     "type": "object",
-    "email": {
-      "type": "unique",
-      "content": {
-        "type": "string",
-        "faker": {
-          "generator": "safe_email"
-        }
-      }
+    "html_content": {
+      "type": "string",
+      "pattern": "[a-zA-Z0-9]{0, 100}"
     },
-    "id": {
+    "newsletter_id": {
       "type": "unique",
       "algorithm": {
         "Hash": {
@@ -32,17 +27,19 @@
         "uuid": {}
       }
     },
-    "name": {
-      "type": "string",
-      "faker": {
-        "generator": "name"
-      }
-    },
-    "subscribed_at": {
+    "published_at": {
       "type": "date_time",
       "format": "%Y-%m-%dT%H:%M:%S%z",
       "subtype": "date_time",
       "begin": "2020-01-01T00:00:00+0000"
+    },
+    "text_content": {
+      "type": "string",
+      "pattern": "[a-zA-Z0-9]{0, 100}"
+    },
+    "title": {
+      "type": "string",
+      "pattern": "[a-zA-Z0-9]{0, 10}"
     }
   }
 }

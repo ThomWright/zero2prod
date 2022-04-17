@@ -22,27 +22,13 @@ Try `TEST_LOG=true cargo test --test integration | bunyan` for integration tests
 
 Uses [Synth](https://www.getsynth.com/) to generate data to seed the database.
 
-The `bytea` type isn't yet supported (which the `_sqlx_migrations` table uses), so to hack around this:
+- `./scripts/pre-seed.sh`
+- Manually fix up the JSON files
+- `./scripts/seed.sh`
 
-- Connect to the database
-- Clone the database schema: `CREATE DATABASE newsletter_synth TEMPLATE newsletter;`
-- Drop the migrations table: `DROP TABLE _sqlx_migrations;`
+Synth problems:
 
-Import: `synth import --from postgres://postgres:password@localhost:5432/newsletter_synth synth`
-
-~Generate: `synth generate --to postgres://postgres:password@localhost:5432/newsletter_synth synth`~
-
-That doesn't work: [bug](https://github.com/getsynth/synth/issues/270).
-
-So:
-
-- `synth generate --to csv:tmp/data.csv synth`
-
-- XXX:
-
-  ```bash
-  synth generate --to csv: synth |
-    tail -n +5 -f - |
-    grep . |
-    psql -h "localhost" -U postgres -d newsletter_synth -c 'COPY subscriptions (email, id, name, subscribed_at) FROM STDIN CSV HEADER'
-  ```
+- bytea datatype
+- composite primary key
+- inserting uuids
+- failing on existing directories

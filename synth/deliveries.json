@@ -1,0 +1,35 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "range": {
+      "low": 10,
+      "high": 20,
+      "step": 1
+    },
+    "subtype": "u64"
+  },
+  "content": {
+    "type": "object",
+    "id": {
+      "type": "unique",
+      "algorithm": {
+        "Hash": {
+          "retries": null
+        }
+      },
+      "content": {
+        "type": "string",
+        "uuid": {}
+      }
+    },
+    "newsletter_id": {
+      "type": "same_as",
+      "ref": "newsletters.content.newsletter_id"
+    },
+    "subscription_id": {
+      "type": "same_as",
+      "ref": "subscriptions.content.id"
+    }
+  }
+}
