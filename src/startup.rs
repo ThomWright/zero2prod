@@ -4,7 +4,7 @@ use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
 use crate::configuration::Settings;
-use crate::db::{run_migrations, create_connection_pool};
+use crate::db::{create_connection_pool, run_migrations};
 use crate::routes::{health_check, subscribe};
 
 pub async fn init(configuration: Settings) -> std::io::Result<Server> {
