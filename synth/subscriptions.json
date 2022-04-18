@@ -1,14 +1,6 @@
 {
   "type": "array",
-  "length": {
-    "type": "number",
-    "range": {
-      "low": 50,
-      "high": 100,
-      "step": 1
-    },
-    "subtype": "u64"
-  },
+  "length": 1000,
   "content": {
     "type": "object",
     "email": {
@@ -29,7 +21,7 @@
       },
       "content": {
         "type": "string",
-        "uuid": {}
+        "uuid": null
       }
     },
     "name": {

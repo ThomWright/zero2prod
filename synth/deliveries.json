@@ -1,14 +1,6 @@
 {
   "type": "array",
-  "length": {
-    "type": "number",
-    "range": {
-      "low": 10,
-      "high": 20,
-      "step": 1
-    },
-    "subtype": "u64"
-  },
+  "length": 5000,
   "content": {
     "type": "object",
     "id": {
@@ -20,7 +12,7 @@
       },
       "content": {
         "type": "string",
-        "uuid": {}
+        "uuid": null
       }
     },
     "newsletter_id": {
